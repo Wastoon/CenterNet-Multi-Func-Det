@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=2 python demo.py --task cloth --demo /data1/mry/datasets/deepfashion2/test --load_model /data/mry/code/CenterNet/exp/cloth/deepfashion2train312/model_last.pth --debug 2 --dataset deepfashion2
