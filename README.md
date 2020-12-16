@@ -22,15 +22,15 @@ Based on the original centerNet using a single Gaussian template to represent ob
 
   Therefore, we use multiple points on the target to represent the object, not just the center point. The specific representation method of the object is shown in the figure below:
 
-  ![fig6](/Users/mry/Desktop/typora/500ppi/fig6.png)
+  ![fig6](gitimg/fig6.png)
 
   You can use the input parameter ==point_flags== in [How to use](#4. How to use?) to control the combination and number of heatmaps to be used for the object. There are a total of 9 locations of heatmaps that can be used. By matching the heatmaps of different locations, you can ensure that the heatmaps are on the object.
 
-  ![fig4_1](/Users/mry/Desktop/typora/500ppi/fig4_1.png)
+  ![fig4_1](gitimg/fig4_1.png)
 
   ### Only one point heatmap
 
-  ![fig2](/Users/mry/Desktop/typora/500ppi/fig2.png)
+  ![fig2](gitimg/fig2.png)
 
   **Object Detection on COCO validation**
 
@@ -43,9 +43,9 @@ Based on the original centerNet using a single Gaussian template to represent ob
 
   ### Three points heatmap
 
-  ![fig1](/Users/mry/Desktop/typora/500ppi/fig1.png)
+  ![fig1](gitimg/fig1.png)
 
-  ![fig4](/Users/mry/Desktop/typora/500ppi/fig4.png)
+  ![fig4](gitimg/fig4.png)
 
   **Object Detection on COCO validation**
 
@@ -55,7 +55,7 @@ Based on the original centerNet using a single Gaussian template to represent ob
 
   ### More points heatmap
 
-  ![fig3](/Users/mry/Desktop/typora/500ppi/fig3.png)
+  ![fig3](gitimg/fig3.png)
 
   **Object Detection on COCO validation**
 
@@ -69,7 +69,7 @@ Based on the original centerNet using a single Gaussian template to represent ob
 
   CenterNet is very suitable for face key point detection tasks. The face datasets 300W and 300VW contain 68 facial landmarks, and the face dataset AFLW contains 19 facial landmarks. I divided the task into two steps. The first step is to predict the center of the face (define the nose tip as the center of the face, and the center  defined by different datasets are different), and then predict the offset of other landmarks to the center.Final facial landmark results are obtained by moving the coordinates in post-processing to obtain the coordinates of the facial landmark. In addition to using this method to detect facial landmark, I also provide a direct regression of the heatmap for the 68 facial landmark. The heatmap  of whole facial landmarks are predicted at one time through the regression map, and then pooling is used in the post-processing process to extract the peak value of the heatmap. Of course, these two methods use different forms of supervision signals. Except for the different projection heads, the encoder and decoder structures of the model are the same.
 
-  ![fig7](/Users/mry/Desktop/typora/500ppi/fig7.png)
+  ![fig7](gitimg/fig7.png)
 
   **Facial Landmark Detection on 300W test Dataset**
 
@@ -81,7 +81,7 @@ Based on the original centerNet using a single Gaussian template to represent ob
 
 * DeepFashion2 Keypoint Detection
 
-  ![fig8](/Users/mry/Desktop/typora/500ppi/fig8.png)
+  ![fig8](gitimg/fig8.png)
 
 ## 4. How to use?
 
