@@ -11,6 +11,8 @@ from .clothlandmark_trainer import clothLandmarkTrainer
 from .gridneighbordet import GridneighbordetTrainer
 from .ctdet_doublehm import CtdetTrainer_Doublehm
 from .ctdet_esphm_trainer import CtdetTrainer_esphm
+from .vehicledet_trainer import VehicledetTrainer
+from .vehicledet_trainer_SINangle import VehicledetSINAngleTrainer
 
 train_factory = {
   'exdet': ExdetTrainer, 
@@ -21,5 +23,7 @@ train_factory = {
   'cloth': clothLandmarkTrainer,
   'gridneighbordet': GridneighbordetTrainer,
   'ctdet_Dhm':CtdetTrainer_Doublehm,
-  'ctdet_esphm': CtdetTrainer_esphm
+  'ctdet_esphm': CtdetTrainer_esphm,
+  'vehicle_det' : VehicledetTrainer,
+  'vehicle_det_SinAngle' :VehicledetSINAngleTrainer
 }

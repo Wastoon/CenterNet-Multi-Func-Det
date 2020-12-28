@@ -24,6 +24,10 @@ def main(opt):
   opt = opts().update_dataset_info_and_set_heads(opt, Dataset)
   print(opt)
 
+  #val_dataset = Dataset(opt, 'train')
+  #test_data = val_dataset[10]
+
+
   logger = Logger(opt)
 
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
@@ -69,7 +73,11 @@ def main(opt):
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
     mark = epoch if opt.save_all else 'last'
-    log_dict_train, _ = trainer.train(epoch, train_loader, logger)
+    if opt.accumulated_grad:
+        log_dict_train, _ = trainer.train(epoch, train_loader, logger)
+        trainer.accumulated_loss = 0
+    else:
+        log_dict_train, _ = trainer.train(epoch, train_loader, logger)
     logger.write_epoch('epoch: {} |'.format(epoch))
     if epoch % 5 ==0:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)),epoch, model, optimizer)

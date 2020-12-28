@@ -86,9 +86,11 @@ class opts(object):
     # train
     self.parser.add_argument('--lr', type=float, default=1.25e-4, 
                              help='learning rate for batch size 32.')
+    self.parser.add_argument('--accumulated_grad', type=bool, default=False,
+                             help='whether or not use accumulated_grad.')
     self.parser.add_argument('--lr_step', type=str, default='90,120',
                              help='drop learning rate by 10.')
-    self.parser.add_argument('--num_epochs', type=int, default=60,
+    self.parser.add_argument('--num_epochs', type=int, default=150,
                              help='total training epochs.')
     self.parser.add_argument('--batch_size', type=int, default=2,
                              help='batch size')
@@ -139,7 +141,7 @@ class opts(object):
                              help='not use the color augmenation '
                                   'from CornerNet')
 
-    self.parser.add_argument('--point_flags', type = str, default='0, 4, 8', help='detection points defined')
+    self.parser.add_argument('--point_flags', type = str, default='4', help='detection points defined')
     # multi_pose
     self.parser.add_argument('--aug_rot', type=float, default=0,
                              help='probability of applying '
@@ -246,6 +248,20 @@ class opts(object):
     self.parser.add_argument('--eval_oracle_dep', action='store_true', 
                              help='use ground truth depth.')
 
+    ## vehicle det
+    self.parser.add_argument('--ang_weight', type=float, default=0.1,
+                             help='loss weight for boxes angle.')
+    self.parser.add_argument('--use_contour_fourier', type=bool, default=False, help='whether or not use fourier_contour')
+    self.parser.add_argument('--fourier_contour_weight', type=float, default=0.1, help='loss weight for fourier contour')
+    self.parser.add_argument('--fourier_order', type=int, default=100,
+                             help='fourier order approximation')
+    self.parser.add_argument('--fourier_time_length', type=int, default=300,
+                             help='fourier time length for DFT')
+    self.parser.add_argument('--use_fourier_rotate', type=bool, default=False,
+                             help='fourier time length for DFT')
+
+
+
   def parse(self, args=''):
     if args == '':
       opt = self.parser.parse_args()
@@ -298,6 +314,8 @@ class opts(object):
     opt.data_dir = '/data/mry/DataSet/'
     #opt.data_dir = '/data1/mry/datasets'
     opt.data_dir = '/data1/mry/datasets/landmark-datasets/300W/'
+    opt.data_dir = '/data4/mry'
+
     opt.exp_dir = os.path.join(opt.root_dir, 'exp', opt.task)
     opt.save_dir = os.path.join(opt.exp_dir, opt.exp_id)
     opt.debug_dir = os.path.join(opt.save_dir, 'debug')
@@ -406,6 +424,12 @@ class opts(object):
             opt.heads.update({'hm_hp': 294})
         if opt.reg_hp_offset:
             opt.heads.update({'hp_offset': 2})
+    elif opt.task == 'vehicle_det' or opt.task=='vehicle_det_SinAngle':
+        opt.heads = {'hm': opt.num_classes, 'wh': 2, 'ang': 1}
+        if opt.reg_offset:
+            opt.heads.update({'reg': 2})
+        if opt.use_contour_fourier:
+            opt.heads.update({'contour':(2*opt.fourier_order+1)*2})
     else:
       assert 0, 'task not defined!'
     print('heads', opt.heads)
@@ -452,7 +476,15 @@ class opts(object):
             'flip_idx': [[0, 16], [1, 15], [2, 14], [3, 13], [4, 12], [5, 11], [6, 10], [7, 9], [17, 26], [18, 25],
                          [19, 24], [20, 23], [21, 22], [39, 42], [38, 43], [37, 44], [36, 45], [41, 46], [40, 47],
                          [31, 35], [32, 34], [48, 54], [49, 53], [50, 52], [59, 55], [58, 56], [60, 64], [61, 63],
-                         [67, 65]]}
+                         [67, 65]]},
+        'vehicle_det': {'default_resolution': [512, 512], 'num_classes': 1,
+                'mean': [0.5194416012442385, 0.5378052387430711, 0.533462090585746],
+                'std': [0.3001546018824507, 0.28620901391179554, 0.3014112676161966],
+                'dataset': 'vehicle'},
+        'vehicle_det_SinAngle': {'default_resolution': [960, 960], 'num_classes': 13,
+                        'mean': [0.5194416012442385, 0.5378052387430711, 0.533462090585746],
+                        'std': [0.3001546018824507, 0.28620901391179554, 0.3014112676161966],
+                        'dataset': 'SampleVehicle'},
     }
     class Struct:
       def __init__(self, entries):

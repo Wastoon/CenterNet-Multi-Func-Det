@@ -11,6 +11,8 @@ from .deepfashion2_detector import ClothDetector
 from .gridneighbordet_detector import GridneighbordetDetector
 from .ctdet_Dhm import CtdetDetector_Doublehm
 from .ctdet_esphm import CtdetDetector_esphm
+from .vehicledet_detector import VehicledetDetector
+from .vehicledetSinAngle_detector import VehicledetSinAngleDetector
 
 detector_factory = {
   'exdet': ExdetDetector, 
@@ -21,5 +23,7 @@ detector_factory = {
   'cloth' : ClothDetector,
   'gridneighbordet': GridneighbordetDetector,
   'ctdet_Dhm':CtdetDetector_Doublehm,
-  'ctdet_esphm':CtdetDetector_esphm
+  'ctdet_esphm':CtdetDetector_esphm,
+  'vehicle_det' : VehicledetDetector,
+  'vehicle_det_SinAngle' : VehicledetSinAngleDetector
 }

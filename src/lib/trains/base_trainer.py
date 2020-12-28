@@ -32,6 +32,7 @@ class BaseTrainer(object):
     self.loss_stats, self.loss = self._get_losses(opt)
     self.model_with_loss = ModleWithLoss(model, self.loss)
     self.reconstruct_img = False
+    self.accumulated_loss = 0 if self.opt.accumulated_grad else None
 
   def set_device(self, gpus, chunk_sizes, device):
     if len(gpus) > 1:
@@ -66,6 +67,7 @@ class BaseTrainer(object):
 
     opt = self.opt
     results = {}
+
     data_time, batch_time = AverageMeter(), AverageMeter()
     avg_loss_stats = {l: AverageMeter() for l in self.loss_stats}
     num_iters = len(data_loader) if opt.num_iters < 0 else opt.num_iters
@@ -85,9 +87,15 @@ class BaseTrainer(object):
         self.save_tensor_to_img(output['reconstruct_img'], batch['meta']['file_name'], file_path)
       loss = loss.mean()
       if phase == 'train':
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
+        if opt.accumulated_grad:
+          if iter_id==0:
+            self.optimizer.zero_grad()
+          loss.backward()
+          self.accumulated_loss += loss.item()
+        else:
+          self.optimizer.zero_grad()
+          loss.backward()
+          self.optimizer.step()
       batch_time.update(time.time() - end)
       end = time.time()
 
@@ -139,6 +147,9 @@ class BaseTrainer(object):
     bar.finish()
     ret = {k: v.avg for k, v in avg_loss_stats.items()}
     ret['time'] = bar.elapsed_td.total_seconds() / 60.
+    if phase == 'train' and opt.accumulated_grad:
+      self.optimizer.step()
+      ret['accumulated_loss'] = self.accumulated_loss / num_iters
     return ret, results
   
   def debug(self, batch, output, iter_id):

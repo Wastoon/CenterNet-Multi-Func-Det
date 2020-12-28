@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 from .ddd_utils import compute_box_3d, project_to_image, draw_box_3d
 import os
-
+import math
 
 class Debugger(object):
     def __init__(self, ipynb=False, theme='black',
@@ -172,6 +172,10 @@ class Debugger(object):
             self.names = coco_class_name
         elif num_classes == 20 or dataset == 'pascal':
             self.names = pascal_class_name
+        elif num_classes == 1 or dataset == 'vehicle':
+            self.names = vehicle_class_name
+        elif num_classes == 13 or dataset == 'SampleVehicle':
+            self.names = sample_check_vehicle_class_name
         elif dataset == 'gta':
             self.names = gta_class_name
             self.focal_length = 935.3074360871937
@@ -241,6 +245,7 @@ class Debugger(object):
       '''
 
     def gen_colormap(self, img, output_res=None):
+
         img = img.copy()
         c, h, w = img.shape[0], img.shape[1], img.shape[2]
         if output_res is None:
@@ -331,6 +336,7 @@ class Debugger(object):
         c = self.colors[cat][0][0].tolist()
         if self.theme == 'white':
             c = (255 - np.array(c)).tolist()
+
         txt = '{}{:.1f}'.format(self.names[cat], conf)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
@@ -342,6 +348,45 @@ class Debugger(object):
                           (bbox[0] + cat_size[0], bbox[1] - 2), c, -1)
             cv2.putText(self.imgs[img_id], txt, (bbox[0], bbox[1] - 2),
                         font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
+
+    def add_coco_Rotate_bbox(self, bbox, cat, ang, conf=1, show_txt=True, img_id='default', system='Ang'):
+        bbox = np.array(bbox, dtype=np.int32)
+        # cat = (int(cat) + 1) % 80
+        cat = int(cat)
+        # print('cat', cat, self.names[cat])
+        c = self.colors[cat][0][0].tolist()
+        if self.theme == 'white':
+            c = (255 - np.array(c)).tolist()
+        txt = '{}{:.1f}'.format(self.names[cat], conf)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
+        point1, point2, point3, point4 = rotate_rec(bbox[0], bbox[1], bbox[2], bbox[3], ang, system=system)
+        cv2.line(self.imgs[img_id], point1, point2, (0, 0, 255), 2)
+        cv2.line(self.imgs[img_id], point2, point3, (255, 0, 0), 2)
+        cv2.line(self.imgs[img_id], point3, point4, (0, 0, 255), 2)
+        cv2.line(self.imgs[img_id], point1, point4, (255, 0, 0), 2)
+
+        if show_txt:
+            cv2.rectangle(self.imgs[img_id],
+                          (bbox[0], bbox[1] - cat_size[1] - 2),
+                          (bbox[0] + cat_size[0], bbox[1] - 2), c, -1)
+            cv2.putText(self.imgs[img_id], txt, (bbox[0], bbox[1] - 2),
+                        font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
+
+    def add_dft_points_on_img(self, cat, point_set, img_id='default'):
+        """
+        point_set: shape is num_point x 2
+        """
+        point_set = point_set.reshape(-1,1,2)
+        cat = int(cat)
+        # print('cat', cat, self.names[cat])
+        c = self.colors[cat][0][0].tolist()
+        if self.theme == 'white':
+            c = (255 - np.array(c)).tolist()
+
+        point_set = point_set.astype(np.int32)
+        cv2.polylines(self.imgs[img_id], [point_set], isClosed=True, color=c, thickness=2)
+
 
     def add_coco_hp(self, points, img_id='default'):
         points = np.array(points, dtype=np.int32).reshape(self.num_joints, 2)
@@ -624,6 +669,45 @@ class Debugger(object):
                                      lineType=cv2.LINE_AA)
         self.imgs[img_id] = bird_view
 
+def rotate_rec(lx, ly, rx, ry, ang, system='Ang'):
+    center_x = int((lx+rx)/2)
+    center_y = int((ly+ry)/2)
+    bbox_width = int(rx-lx)
+    bbox_height = int(ry-ly)
+    if system== 'Ang':
+        anglePi = ang/180*math.pi
+    if system == 'Rad':
+        anglePi = ang
+
+
+    anglePi = anglePi if anglePi <= math.pi else anglePi - math.pi
+
+    cosA = math.cos(anglePi)
+    sinA = math.sin(anglePi)
+
+    x1 = center_x - 0.5 * bbox_width
+    y1 = center_y - 0.5 * bbox_height
+    x0 = center_x + 0.5 * bbox_width
+    y0 = y1
+    x2 = x1
+    y2 = center_y + 0.5 * bbox_height
+    x3 = x0
+    y3 = y2
+
+    x0n = int((x0 - center_x) * cosA - (y0 - center_y) * sinA + center_x)
+    y0n = int((x0 - center_x) * sinA + (y0 - center_y) * cosA + center_y)
+
+    x1n = int((x1 - center_x) * cosA - (y1 - center_y) * sinA + center_x)
+    y1n = int((x1 - center_x) * sinA + (y1 - center_y) * cosA + center_y)
+
+    x2n = int((x2 - center_x) * cosA - (y2 - center_y) * sinA + center_x)
+    y2n = int((x2 - center_x) * sinA + (y2 - center_y) * cosA + center_y)
+
+    x3n = int((x3 - center_x) * cosA - (y3 - center_y) * sinA + center_x)
+    y3n = int((x3 - center_x) * sinA + (y3 - center_y) * cosA + center_y)
+
+    return (x0n, y0n), (x1n, y1n), (x2n, y2n), (x3n, y3n)
+
 
 kitti_class_name = [
     'p', 'v', 'b'
@@ -636,6 +720,12 @@ gta_class_name = [
 pascal_class_name = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus",
                      "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
                      "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+
+vehicle_class_name = ['car']
+sample_check_vehicle_class_name = ['suv_white', 'car_black', 'car_silver_gray', 'suv_red',
+                                   'car_white', 'car_whit', 'suv_yellow','van_silver_gray',
+                                   'car_red', 'suv_black', 'car_blue', 'suv_silver_gray',
+                                   'car_yellow']
 
 coco_class_name = [
     'person', 'bicycle', 'car', 'motorcycle', 'airplane',
