@@ -36,7 +36,7 @@ def main(opt):
   print('Creating model...')
   model = create_model(opt.arch, opt.heads, opt.head_conv)
   optimizer = torch.optim.Adam(model.parameters(), opt.lr)
-  #optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=0.9)
+  optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=0.9)
   start_epoch = 0
   if opt.load_model != '':
     model, optimizer, start_epoch = load_model(
@@ -64,7 +64,7 @@ def main(opt):
   train_loader = torch.utils.data.DataLoader(
       Dataset(opt, 'train'),
       batch_size=opt.batch_size,
-      shuffle=False,
+      shuffle=True,
       num_workers=opt.num_workers,
       pin_memory=True,
       drop_last=True
@@ -79,7 +79,7 @@ def main(opt):
     else:
         log_dict_train, _ = trainer.train(epoch, train_loader, logger)
     logger.write_epoch('epoch: {} |'.format(epoch))
-    if epoch % 5 ==0:
+    if epoch % 1 ==0:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)),epoch, model, optimizer)
     for k, v in log_dict_train.items():
       logger.scalar_summary('train_epoch_{}'.format(k), v, epoch)

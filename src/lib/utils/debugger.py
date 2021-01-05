@@ -174,7 +174,7 @@ class Debugger(object):
             self.names = pascal_class_name
         elif num_classes == 1 or dataset == 'vehicle':
             self.names = vehicle_class_name
-        elif num_classes == 13 or dataset == 'SampleVehicle':
+        elif num_classes == 13 or dataset == 'SampleVehicle' or dataset== 'ALLVehicle':
             self.names = sample_check_vehicle_class_name
         elif dataset == 'gta':
             self.names = gta_class_name
@@ -454,6 +454,16 @@ class Debugger(object):
                     self.plt.imshow(v)
             self.plt.show()
 
+
+    def show_onekind_imgs(self, img_id, pause=False, time=0):
+        #cv2.imshow('{}'.format(img_id), self.imgs[img_id])
+
+        #if cv2.waitKey(0 if pause else 1) == 27:
+        #    import sys
+        #    sys.exit(0)
+        return self.imgs[img_id]
+
+
     def save_img(self, imgId='default', path='./cache/debug/'):
         cv2.imwrite(path + '{}.png'.format(imgId), self.imgs[imgId])
 
@@ -722,10 +732,15 @@ pascal_class_name = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus",
                      "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 vehicle_class_name = ['car']
-sample_check_vehicle_class_name = ['suv_white', 'car_black', 'car_silver_gray', 'suv_red',
-                                   'car_white', 'car_whit', 'suv_yellow','van_silver_gray',
-                                   'car_red', 'suv_black', 'car_blue', 'suv_silver_gray',
-                                   'car_yellow']
+#sample_check_vehicle_class_name = ['suv_white', 'car_black', 'car_silver_gray', 'suv_red',
+#                                   'car_white', 'car_whit', 'suv_yellow','van_silver_gray',
+#                                   'car_red', 'suv_black', 'car_blue', 'suv_silver_gray',
+#                                   'car_yellow']
+
+sample_check_vehicle_class_name = ['car_white', 'suv_red', 'suv_white', 'car_black', 'car_red', 'suv_black', 'van_white', 'suv_yellow',
+     'car_yellow', 'car_blue', 'car_unknown', 'other', 'truck_white','van_black', 'bus_green' ,'truck_blue', 'bus_black',
+      'bus_white', 'truck_red', 'car_green',  'truck_green','truck_black', 'truck_unknown', 'suv_unknown', 'van_yellow',
+      'truck_yellow','van_unknown', 'van_green', 'van_blue', 'car_silver_gray', 'bus_yellow']
 
 coco_class_name = [
     'person', 'bicycle', 'car', 'motorcycle', 'airplane',

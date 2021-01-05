@@ -79,6 +79,10 @@ class BaseDetector(object):
 
   def show_results(self, debugger, image, results):
    raise NotImplementedError
+  def results_for_video(self, debugger, image, results):
+    pass
+  def run_on_video(self, video):
+    pass
 
   def save_results_only(self, debugger, image, results, image_name):
    raise NotImplementedError
@@ -132,20 +136,19 @@ class BaseDetector(object):
       pre_time += pre_process_time - scale_start_time
       
       output, dets, forward_time = self.process(images, return_time=True)
-      print(image_name)
-      print(dets)
-      #if self.reconstruct_img:
-      #  self.save_tensor_to_img(output['reconstruct_img'])
+      #print(image_name)
+      #print(dets)
+
 
       torch.cuda.synchronize()
       net_time += forward_time - pre_process_time
       decode_time = time.time()
       dec_time += decode_time - forward_time
       
-      if self.opt.debug >= 2:
+      if self.opt.debug >= 2 and self.opt.debug <= 4:
+
         self.debug(debugger, images, dets, output, scale)
 
-      
       dets = self.post_process(dets, meta, scale)
       #print(dets)
       torch.cuda.synchronize()
@@ -160,15 +163,24 @@ class BaseDetector(object):
     merge_time += end_time - post_process_time
     tot_time += end_time - start_time
 
-    if self.opt.debug >= 1:
+    if self.opt.debug >= 1 and self.opt.debug <= 4:
       if image_name is not None:
         self.show_results(debugger, image, results)
+        #self.save_results_only(debugger, image, results, image_name)
         #self.save_person_only(debugger, image, results, image_name)
 
+    if self.opt.debug == 5:
+      vis_img = self.results_for_video(debugger, image, results)
     if self.opt.debug == 0:
       if image_name is not None:
         self.save_results_only(debugger, image, results, image_name)
 
-    return {'results': results, 'tot': tot_time, 'load': load_time,
+    return_val = {'results': results, 'tot': tot_time, 'load': load_time,
             'pre': pre_time, 'net': net_time, 'dec': dec_time,
             'post': post_time, 'merge': merge_time, 'image_name': image_name}
+    if self.opt.debug == 5:
+      import pdb
+      pdb.set_trace()
+      return_val['vis_img'] = vis_img
+
+    return return_val

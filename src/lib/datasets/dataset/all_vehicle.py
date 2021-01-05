@@ -10,8 +10,8 @@ import os
 
 import torch.utils.data as data
 
-class SampleVehicle(data.Dataset):
-  num_classes = 13
+class ALLVehicle(data.Dataset):
+  num_classes = 31
   default_resolution = [960, 960]
   #mean = np.array([0.40789654, 0.44719302, 0.47026115],
   #                 dtype=np.float32).reshape(1, 1, 3)
@@ -22,7 +22,7 @@ class SampleVehicle(data.Dataset):
 
 
   def __init__(self, opt, split):
-    super(SampleVehicle, self).__init__()
+    super(ALLVehicle, self).__init__()
     self.data_dir = os.path.join(opt.data_dir, 'Vehicle')
     self.img_dir = os.path.join(self.data_dir, 'all_images')
     if split == 'test':
@@ -41,8 +41,11 @@ class SampleVehicle(data.Dataset):
 
     self.max_objs = 128
     self.class_name = [
-      '__background__', 'car']
-    self._valid_ids = [1, 2, 3, 4, 5, 6,7 ,8,9,10,11,12,13]
+      '__background__', 'car_white', 'suv_red', 'suv_white', 'car_black', 'car_red', 'suv_black', 'van_white', 'suv_yellow',
+     'car_yellow', 'car_blue', 'car_unknown', 'other', 'truck_white','van_black', 'bus_green' ,'truck_blue', 'bus_black',
+      'bus_white', 'truck_red', 'car_green',  'truck_green','truck_black', 'truck_unknown', 'suv_unknown', 'van_yellow',
+      'truck_yellow','van_unknown', 'van_green', 'van_blue', 'car_silver_gray', 'bus_yellow']
+    self._valid_ids = [1, 2, 3, 4, 5, 6,7 ,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
     self.cat_ids = {v: i for i, v in enumerate(self._valid_ids)}
     self.voc_color = [(v // 32 * 64 + 64, (v // 8) % 4 * 64, v % 8 * 32) \
                       for v in range(1, self.num_classes + 1)]
@@ -60,7 +63,7 @@ class SampleVehicle(data.Dataset):
     self.split = split
     self.opt = opt
 
-    print('==> initializing coco 2014 {} data.'.format(split))
+    print('==> initializing Vehicle full {} data.'.format(split))
     self.coco = coco.COCO(self.annot_path)
     self.images = self.coco.getImgIds()
     self.num_samples = len(self.images)

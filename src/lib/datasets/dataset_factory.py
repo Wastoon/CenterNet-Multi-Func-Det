@@ -22,6 +22,7 @@ from .dataset._300W import _300W
 from .dataset.deepfashion2 import DEEPFASHION2
 from .dataset.vehicle import Vehicle
 from .dataset.sample_vehicle import SampleVehicle
+from .dataset.all_vehicle import ALLVehicle
 
 dataset_factory = {
   'coco': COCO,
@@ -31,7 +32,8 @@ dataset_factory = {
   '300W' : _300W,
   'deepfashion2' :DEEPFASHION2,
   'vehicle': Vehicle,
-  'SampleVehicle' : SampleVehicle
+  'SampleVehicle' : SampleVehicle,
+  'ALLVehicle': ALLVehicle
 }
 
 _sample_factory = {

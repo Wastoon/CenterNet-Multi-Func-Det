@@ -111,6 +111,8 @@ class opts(object):
                              help='multi scale test augmentation.')
     self.parser.add_argument('--nms', action='store_true',
                              help='run nms in testing.')
+    self.parser.add_argument('--show_label', action='store_true',
+                             help='show object label or not.')
     self.parser.add_argument('--K', type=int, default=100,
                              help='max number of output objects.') 
     self.parser.add_argument('--not_prefetch_test', action='store_true',
@@ -259,6 +261,8 @@ class opts(object):
                              help='fourier time length for DFT')
     self.parser.add_argument('--use_fourier_rotate', type=bool, default=False,
                              help='fourier time length for DFT')
+    self.parser.add_argument('--output_video_demo', type=str, default=None,
+                             help='save or not video demo output')
 
 
 
@@ -477,14 +481,14 @@ class opts(object):
                          [19, 24], [20, 23], [21, 22], [39, 42], [38, 43], [37, 44], [36, 45], [41, 46], [40, 47],
                          [31, 35], [32, 34], [48, 54], [49, 53], [50, 52], [59, 55], [58, 56], [60, 64], [61, 63],
                          [67, 65]]},
-        'vehicle_det': {'default_resolution': [512, 512], 'num_classes': 1,
+        'vehicle_det': {'default_resolution': [960,960], 'num_classes': 31,
                 'mean': [0.5194416012442385, 0.5378052387430711, 0.533462090585746],
                 'std': [0.3001546018824507, 0.28620901391179554, 0.3014112676161966],
-                'dataset': 'vehicle'},
-        'vehicle_det_SinAngle': {'default_resolution': [960, 960], 'num_classes': 13,
+                'dataset': 'ALLVehicle'},
+        'vehicle_det_SinAngle': {'default_resolution': [960, 960], 'num_classes': 31,
                         'mean': [0.5194416012442385, 0.5378052387430711, 0.533462090585746],
                         'std': [0.3001546018824507, 0.28620901391179554, 0.3014112676161966],
-                        'dataset': 'SampleVehicle'},
+                        'dataset': 'ALLVehicle'},
     }
     class Struct:
       def __init__(self, entries):

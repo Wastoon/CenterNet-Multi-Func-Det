@@ -541,7 +541,7 @@ def vehicledet_decode(heat, wh, ang, reg=None, cat_spec_wh=False, K=100):
 
     # heat = torch.sigmoid(heat)
     # perform nms on heatmaps
-    heat = _nms(heat)
+    heat = _nms(heat, kernel=3)
 
     scores, inds, clses, ys, xs = _topk(heat, K=K)
     if reg is not None:
