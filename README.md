@@ -1,117 +1,74 @@
-
-
-
-
-# Enhanced-CenterNet for Bottom-Up Computer Vision Task (Work Summary)
+# VehicleDet by CenterNet
 
 ## 1. Introduction
 
-[CenterNet](https://github.com/xingyizhou/CenterNet), as an anchor-free target detection model, represents the object as a scale-adaptive Gaussian template, and uses a multi-task framework to regress to other defined properties of the object (such as the length and width of the object, the offset between the edge of the object and center, etc. ). Compared with the two-stage detector based on region proposal, the bottom-up framework has a significantly higher inference speed, and it can also be regarded as the limit form of the single-stage detector for object modeling. However, centerNet is still at a disadvantage in terms of map accuracy compared with the two-stage detector. For more details, you can read the origin paper: [Object as point.](http://arxiv.org/abs/1904.07850)
+[CenterNet](https://github.com/xingyizhou/CenterNet)作为无锚目标检测模型，将对象表示为可缩放的高斯模板，并使用多任务框架回归到对象的其他已定义属性（例如对象的长度和宽度） ，对象边缘和中心之间的偏移量等）。 与基于区域提议的两级检测器相比，自下而上的框架具有明显更高的推理速度，它也可以被视为对象建模单级检测器的极限形式。 但是，与两阶段检测器相比，centerNet在准确性方面仍处于劣势。 有关更多详细信息，您可以阅读原始论文：[Object as point](http://arxiv.org/abs/1904.07850)。
 
-## 2. Abstract
+## 2. Task Background
 
-Based on the original centerNet using a single Gaussian template to represent objects, this repo uses an adjustable number of Gaussian templates to fully cover a single object, which effectively improves the map of centerNet on COCO dataset. In addition, this repo is adapted to the deepfashion2 dataset for clothing keypoint detection, and this repo is also adapted to the 300W dataset for facial landmark detection.
+停车场车辆检测任务共包含了6个大类的检测对象，分别为car, suv, van, other, truck, bus。当考虑车体颜色后，一共扩展出共计31个类别的检测目标，分别为：
 
-### 3. Expand Task
++ 1：car_white
++ 2：suv_red
++ 3：suv_white
++ 4：car_black
++ 5：car_red
++ 6：suv_black
++ 7：van_white
++ 8：suv_yellow
++ 9：car_yellow
++ 10：car_blue
++ 11：car_unknown
++ 12：other
++ 13：truck_white
++ 14：van_black
++ 15：bus_green
++ 16：truck_blue
++ 17：bus_black
++ 18：bus_white
++ 19：truck_red
++ 20：car_green
++ 21：truck_green
++ 22：truck_black
++ 23：truck_unknown
++ 24：suv_unknown
++ 25：van_yellow
++ 26：truck_yellow
++ 27：van_unknown
++ 28：van_green
++ 29：van_blue
++ 30：car_silver_gray
++ 31：bus_yellow
 
-* GridNeighbordet for General Object Detection
+## 3. How to use?
 
-  经典的centerNet会回归出通道数为80（COCO数据集）或21（pascalVOC数据集）的中心点的heatmap。然而有时候某个物体的质心位置上并不包含或很少包含该物体的信息，因为这个物体的质量分布不均匀或者由于遮挡，使得物体中心点处包含了背景的信息甚至是其他物体的信息。因此我们学习了物体表面多个点的heatmap, 通过对检测结果的投票来提高检测的ap和ar。
+### 3.1 Environment Setup
 
-  The classic centerNet will predict the heatmap of the center point with the number of channels 80 (COCO dataset) or 21 (pascalVOC dataset). However, sometimes the center of mass of an object does not contain or rarely contains the information of the object, because the mass distribution of the object is uneven or due to occlusion, which makes center of the object contain background information or even other object information . Therefore, I adjust the number of learned heatmap of singe object, and improved the detection ap and ar by voting on the detection results. It can be seen in the figure below that this problem exists in objects with uneven mass distribution and objects that are blocked.
+代码在Ubuntu16.04，GPUs=1080ti上通过测试
 
-  Therefore, we use multiple points on the target to represent the object, not just the center point. The specific representation method of the object is shown in the figure below:
-
-  ![fig6](gitimg/fig6.png)
-
-  You can use the input parameter ==point_flags== in [How to use](#4. How to use?) to control the combination and number of heatmaps to be used for the object. There are a total of 9 locations of heatmaps that can be used. By matching the heatmaps of different locations, you can ensure that the heatmaps are on the object.
-
-  ![fig4_1](gitimg/fig4_1.png)
-
-  ### Only one point heatmap
-
-  ![fig2](gitimg/fig2.png)
-
-  **Object Detection on COCO validation**
-
-  | Backbone      | AP/FPS     | Flip AP/FPS | Multi-scale AP/FPS |
-  | ------------- | ---------- | ----------- | ------------------ |
-  | Hourglass-104 | 40.3 / 14  | 42.2 / 7.8  | 45.1 / 1.4         |
-  | DLA-34        | 37.4 / 52  | 39.2 / 28   | 41.7 / 4           |
-  | ResNet-101    | 34.6 / 45  | 36.2 / 25   | 39.3 / 4           |
-  | ResNet-18     | 28.1 / 142 | 30.0 / 71   | 33.2 / 12          |
-
-  ### Three points heatmap
-
-  ![fig1](gitimg/fig1.png)
-
-  ![fig4](gitimg/fig4.png)
-
-  **Object Detection on COCO validation**
-
-  | Backbone      | AP/FPS    | Flip AP/FPS | Multi-scale AP/FPS |
-  | ------------- | --------- | ----------- | ------------------ |
-  | Hourglass-104 | 42.8 / 12 | 44.6 / 6.8  | 47.7 / 1.2         |
-
-  ### More points heatmap
-
-  ![fig3](gitimg/fig3.png)
-
-  **Object Detection on COCO validation**
-
-  | Backbone      | AP/FPS   | Flip AP/FPS | Multi-scale AP/FPS |
-  | ------------- | -------- | ----------- | ------------------ |
-  | Hourglass-104 | 44.1 / 8 | 45.8 / 4.4  | 48.7 / 0.8         |
-
-* Facial Landmark Detection
-
-  Centernet非常适合面部关键点检测任务。人脸数据集300W中包含68个关键点，人脸数据集AFLW中包含19个关键点。我将任务分为两步走，第一步首先回归面部的中心点，然后将回归其余关键点与面部中心点的偏移量，通过后处理中坐标的移动得到面部关键点的坐标。除了使用这一种方法检测关键点，我还提供了对于面部68个关键点的heatmap的直接回归，通过回归map的方式一次性进行面部关键点的检测，然后在后处理过程中使用池化方式提取热图峰值，最终得到关键点的结果。当然，这两种方法使用了不同形式的监督信号，除了最后面的投影头不一样之外，模型的encoder和decoder结构都是相同的。
-
-  CenterNet is very suitable for face key point detection tasks. The face datasets 300W and 300VW contain 68 facial landmarks, and the face dataset AFLW contains 19 facial landmarks. I divided the task into two steps. The first step is to predict the center of the face (define the nose tip as the center of the face, and the center  defined by different datasets are different), and then predict the offset of other landmarks to the center.Final facial landmark results are obtained by moving the coordinates in post-processing to obtain the coordinates of the facial landmark. In addition to using this method to detect facial landmark, I also provide a direct regression of the heatmap for the 68 facial landmark. The heatmap  of whole facial landmarks are predicted at one time through the regression map, and then pooling is used in the post-processing process to extract the peak value of the heatmap. Of course, these two methods use different forms of supervision signals. Except for the different projection heads, the encoder and decoder structures of the model are the same.
-
-  ![fig7](gitimg/fig7.png)
-
-  **Facial Landmark Detection on 300W test Dataset**
-
-  |             Method              | Common-NME(ION) | Common-Failture Rate | Common-Fr | Challenge-NME(ION) | Challenge-Failture Rate | Challenge-Fr | Full-NME(ION) | Full-Failture Rate | Full-Fr  |
-  | :-----------------------------: | :-------------: | :------------------: | :-------: | :----------------: | :---------------------: | :----------: | :-----------: | :----------------: | :------: |
-  |           heatmap+reg           |     3.6708      |       0.7233%        |  0.1805%  |       5.7647       |         4.2553%         |   30.3704%   |    3.9750     |      1.2365%       | 6.0958%  |
-  |       heatmap+reg+rotate        |     3.5375      |          0           | 0.05415%  |       6.9251       |        14.7059%         |   24.444%    |    4.0666     |      2.2971%       | 5.2250%  |
-  | heatmap+reg+reg+keep_resolution |     4.6417      |       1.4953%        |  3.4296%  |       6.9097       |         7.8152%         |   52.5926%   |    4.8841     |      2.1703%       | 13.0624% |
-
-* DeepFashion2 Keypoint Detection
-
-  ![fig8](gitimg/fig8.png)
-
-## 4. How to use?
-
-### Environment Setup
-
-The code was tested on Unbuntu16.04 server with 4 1080Ti GPUs.
-
-#### Step 1: Create a new virtual environment with conda 
+#### Step1: 创建conda虚拟环境
 
 ```
-conda create -n centernet_bottomup python=3.7
+conda create -n vehicle_det python=3.7
 ```
 
-#### Step 2: Activate the new environment
+#### Step2: 激活新建的conda环境
 
 ```
-source activate centernet_bottomup
+source activate vehicle_det
 ```
 
-#### Step 3: Install pytorch needed
+#### Step3: 安装所需pytorch版本（使用了pytorch1.4.0）
 
-I use pytorch==1.4.0, maybe higher version can also be ok.
+高于1.0.0版本的pytorch都可以，下文中使用到的可变形卷积（DCN）适配的pytorch版本高于1.0.0。如果安装了0.4.0的pytorch，需要切换DCN的git分支来适配低版本的pyotrch。
 
 ```
 conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.1 -c pytorch
 ```
 
-#### Step 4: Install COCOAPI
+#### Step 4: 安装COCOAPI
 
-Choose a place yourself by convenient, and we define the PATH=/---path you choose--/cocoapi
+因为训练数据集的标注格式为COCO格式，所以需要安装cocoapi套件。选择一个路径 PATH=/---你的路径--/cocoapi
 
 ```
 ###COCOAPI = /---path you choose--/cocoapi
@@ -124,7 +81,7 @@ make
 python setup.py install --user
 ```
 
-#### Step 5: Clone this repo:
+#### Step 5: 克隆这个仓库并切换至vehicle_det分支:
 
 ```
 ####CenterNet_path = /---path you choose--/centernet
@@ -133,17 +90,18 @@ mkdir centernet
 cd centernet
 git clone https://github.com/Wastoon/CenterNet-Multi-Func-Det.git
 cd CenterNet-Multi-Func-Det
+git checkout vehicle_det
 ```
 
-#### Step 6: Install the requirements
+#### Step 6: 安装几个依赖包
 
 ```
 pip install -r requirements.txt
 ```
 
-#### Step 7: Compile deformable convolution
+#### Step 7: 编译DCN[可选部分]
 
-If you need deformable convolution, you can choose compile it in this way.
+如果你要用到使用了DCN的backbone，就需要进行第七步，否则跳过这一部分。在进行这一步时，默认你已经安装了高于1.0.0版本的pytorch。
 
 ```
 cd /src/lib/models/networks
@@ -154,214 +112,167 @@ python testcpu.py    # run examples and gradient check on cpu
 python testcuda.py   # run examples and gradient check on gpu
 ```
 
-### Use GridNeighbor-based Enhanced CenterNet
+#### Step 8: 编译NMS[可选部分]
 
-* **Model:** GridNeighbor-based Enhanced CenterNet are used to perform general object detection, which support COCO dataset and PascalVOC dataset under Hourglass Network. If you want to play with other network much lighter, you can modify the structure of Network just like what I have added in Houglass. 
-
-* **DataSet Preparation**:
-
-  Download the images (2017 Train, 2017 Val, 2017 Test) from [coco website](http://cocodataset.org/#download).
-
-  Download annotation files (2017 train/val and test image info) from [coco website](http://cocodataset.org/#download). 
-
-  ```
-  ###coco_dataset_train_img_path = /---path you choose--/train2017
-  ###coco_dataset_val_img_path = /---path you choose--/val2017
-  ###coco_dataset_test_img_path = /---path you choose--/test2017
-  ###coco_dataset_val_img_path = /---path you choose--/val2017
-  ###coco_dataset_anno_path = /---path you choose--/annotations
-  ###CenterNet_path = /---path you choose--/centernet
-  
-  cd $CenterNet_path
-  mkdir data
-  cd data
-  mkdir coco
-  cd coco
-  ln -s $coco_dataset_train_img_path ./
-  ln -s $coco_dataset_val_img_path ./
-  ln -s coco_dataset_val_img_path ./
-  ln -s coco_dataset_anno_path ./
-  ```
-
-  After this, your data folder just like this:
-
-  ```
-  ${CenterNet_path}
-  |--- data
-  `--- |--- coco
-      `--- |--- annotations
-              |--- instances_train2017.json
-              |--- instances_val2017.json
-              |--- person_keypoints_train2017.json
-              |--- person_keypoints_val2017.json
-              |--- image_info_test-dev2017.json
-          |---|--- train2017
-          |---|--- val2017
-          |---|--- test2017
-  ```
-
-+ **Download some pre_trained model**: You can download many available models [here](https://github.com/xingyizhou/CenterNet/blob/master/readme/MODEL_ZOO.md) , thanks to [Centernet](https://github.com/xingyizhou/CenterNet).
-
-+ **Train model example**:
-
-  ```
-  python src/main.py --task gridneighbordet --dataset coco --exp_id HG_ctdet_coco --debug 2 --load_model models/ctdet_coco_hg.pth --point_flags '0,4,8'
-  ```
-
-### Facial Landmark Detection
-
-- 300-W consits of several different datasets
-- Create directory to save images and annotations: mkdir ~/datasets/landmark-datasets/300W
-- To download i-bug: https://ibug.doc.ic.ac.uk/download/annotations/ibug.zip
-- To download afw: https://ibug.doc.ic.ac.uk/download/annotations/afw.zip
-- To download helen: https://ibug.doc.ic.ac.uk/download/annotations/helen.zip
-- To download lfpw: https://ibug.doc.ic.ac.uk/download/annotations/lfpw.zip
-- To download the bounding box annotations: https://ibug.doc.ic.ac.uk/media/uploads/competitions/bounding_boxes.zip
-- In the folder of `~/datasets/landmark-datasets/300W`, there are four zip files ibug.zip, afw.zip, helen.zip, and lfpw.zip
-```
-unzip ibug.zip -d ibug
-mv ibug/image_092\ _01.jpg ibug/image_092_01.jpg
-mv ibug/image_092\ _01.pts ibug/image_092_01.pts
-
-unzip afw.zip -d afw
-unzip helen.zip -d helen
-unzip lfpw.zip -d lfpw
-unzip bounding_boxes.zip ; mv Bounding\ Boxes Bounding_Boxes
-```
-The 300W directory is in `$HOME/datasets/landmark-datasets/300W` and the sturecture is:
-```
--- afw
--- Bounding_boxes
--- helen
--- ibug
--- lfpw
-```
-
-Then you use the script convert the facial landmark`.pts` annotation to COCO format in `src/tools/300W/preprocess_300w_img.py`. 
+如果你要用到了多尺度的测试，使用NMS来过滤结果。
 
 ```
-python preprocess_300w_img.py
+cd $centernet_root_path/src/lib/external
+make
 ```
 
-Don't forget change the img path and annotation path to your own. And after this script, you can get the train annotation`train.json`, val annotation `val.json`, 3 test annotations `common.json`,`challenge.json`, `full.json` and train img folder `train`, val img folder `val`, and 3 test img folders `commonsubset`,`challengesubset`, `fullset`. Then place the image and generated annotation in this way:
+### 3.2 How to train model?
+
+#### 准备数据集
+
+本仓库使用的是COCO格式的训练标注，但原始标注工具提供的是`.xml`格式的标注，需要借助[R-CenterNet](https://github.com/ZeroE04/R-CenterNet)中的格式转换脚本[`voc2coco.py`](https://github.com/ZeroE04/R-CenterNet/blob/master/labelGenerator/voc2coco.py)将标注转换为COCO格式，详情见[R-CenterNet](https://github.com/ZeroE04/R-CenterNet)。
+
+#### 训练命令示例：
 
 ```
-###Generated_train_img_path = /---path you choose--/train
-###Generated_val_img_path = /---path you choose--/val
-###Generated_test_common_img_path = /---path you choose--/commonsubset
-###Generated_test_full_img_path = /---path you choose--/challengesubset
-###Generated_test_challenge_img_path = /---path you choose--/fullset
-###Generated_train_annotation = /---path you choose--/train.json
-###Generated_val_annotation = /---path you choose--/val.json
-###Generated_test_common_annotation = /---path you choose--/common.json
-###Generated_test_full_annotation = /---path you choose--/full.json
-###Generated_test_challenge_annotation = /---path you choose--/challenge.json
-
-###CenterNet_path = /---path you choose--/centernet
-
-cd $CenterNet_path
-cd data
-mkdir 300w
-cd 300w
-ln -s $Generated_train_img_path ./
-ln -s $Generated_val_img_path ./
-ln -s $Generated_test_common_img_path ./
-ln -s $Generated_test_challenge_img_path ./
-ln -s $Generated_test_full_img_path ./
-mkdir annotations
-cd annotations
-cp $Generated_train_annotation ./
-cp $Generated_val_annotation ./
-cp $Generated_test_common_annotation ./
-cp $Generated_test_full_annotation ./
-cp $Generated_test_challenge_annotation ./
+cd $centernet_root_path
+python src/main.py --task vehicle_det \
+				   --dataset ALLVehicle \
+				   --gpus 0 \
+				   --arch dla_34 \
+				   --exp_id dla34_all_vehicle
+				   --load_model ''
+				   --aug_rot 0 \
+				   --rotate 0 \
+				   --flip 0.5 \
+				   --batch_size 4 \
+                   --num_epochs 20 \
+                   --debug 0
 ```
 
-After this, your data folder just like this:
++ `--task`为必填项，停车场车辆检测使用`vehicle_det`。
++ `--dataset`为必填项，选择车辆检测任务的训练数据集`ALLVehicle`。
++ `--gpus`为可选项，指定训练使用的GPU设备号。
++ `--arch`选择训练使用的模型backbone，可选项有`res_18`，`res_101`，`resdcn_18`，`resdcn_101`，`dlav0_34`，`dla_34`，`hourglass`。
++ `--exp_id `为训练数据保存子文件夹，完整的训练数据保存地址为`$centernet_root_path\exp\vehicle_det\dla34_all_vehicle`。
++ `--load_model`为必填项，训练开始时指定为''。训练中断后，使用`--resume`断点加载模型，`load_model`为断点模型地址。
++ `--aug_rot`为训练过程中使用旋转增强的概率阈值，当旋转概率低于阈值时进行随机旋转增强，旋转范围为$\pm$rotate。训练过程中建议的旋转角度不要超过正负5度，否则会影响模型对于边界框WH的预测。
++ `--flip`为训练过程中使用水平翻转增强的概率宇宙，当翻转概率低于阈值时进行翻转。
++ `--batch_size`为训练样本批次大小。
++ `--num_epochs`为训练迭代周期次数。
++ `--debug`控制训练过程的样本可视化，当`debug`为2时，训练batch自动调整为1，会随训练进行可视化出模型输入，ground_truth，以及模型的全部输出，当`debug`为0时，不随训练显示模型输入输出。
+
+训练过程损失可视化：
 
 ```
-$CenterNet_path
-|---data
-`---|---coco
-    |---300w
-    `---|annotations
-     		`---|---train.json
-     		`---|---val.json
-     		`---|---common.json
-     		`---|---full.json
-     		`---|---challenge.json
-     		|---train
-     		|---val
-     		|---commonsubset
-     		|---challengesubset
-     		|---fullset
+tensorboard --logdir $centernet_root_path\exp\vehicle_det\dla34_all_vehicle
 ```
 
-+ **Train model example**:
+### 3.3 Inference demo
 
-  ```
-  python src/main.py --task landmark --load_model '' --dataset 300W --exp_id HG_landmark_300W --debug 2
-  ```
+demo命令示例：
 
-### DeepFashion2 Detection
+```
+video_path = /--视频文件夹--/2020-12-08_143641_245.avi
+python src/demo.py   --gpus 0\
+                     --demo $video_path \
+                     --load_model $your_model_path \
+                     --task vehicle_det \
+                     --dataset ALLVehicle \
+                     --debug 5 \
+                     --arch dla_34 \
+                     --vis_thresh 0.3 \
+                     --center_thresh 0.3 \
+                     --show_label \
+                     --test_scales "0.5, 0.6, 0.7, 0.8,1.0, 1.1, 1.2,1.3,1.4,1.5" \
+                     --nms \
+                     --output_video_demo $your_savepath/2020-12-08_143641_245.avi
+```
 
-* **DataSet Preparation**:
++ `--vis_thresh`为经过多尺度检测后，整合所有的检测结果完成后，要显示出来的最后筛选阈值。
++ `--center_thresh`为单个尺度下，检测到目标的筛选阈值。
++ `--test_scales`为测试时的图像放大倍数。经过scales的放大倍数后，会裁剪出$1920\times1440$的图像作为输入。
++ `--nms`对多尺度检测后的结果进行soft-nms。
++ `--show_label`为在视频流输出结果中显示检测出车辆的类别标签和置信度得分。
++ `--load_model`为测试模型的地址。
++ `--output_video_demo`为输出视频的保存地址。当不指定`output_video_demo`参数，即不指定视频保存位置时，测试期间显示器会显示实时的车辆检测结果。
 
-  After download the [ Deepfashion2-dataset](https://drive.google.com/drive/folders/125F48fsMBz2EF0Cpqk6aaHet5VH399Ok),  you need fetch the unzip password through this [link](https://docs.google.com/forms/d/e/1FAIpQLSeIoGaFfCQILrtIZPykkr8q_h9qQ5BoTYbjvf95aXbid0v2Bw/viewform?usp=sf_link). And you can fetch the img and annos these two directory. Once you have got img and annotation of deepfashion2 dataset, you need to convert it to COCO format by running the script in `src/tools/deepfashion2/deepfashion2coco.py`.
+==模型输出格式==：
 
-  ```
-  python deepfashion2coco.py
-  ```
+`detector.run(image)`的输出为一个字典，如下：
 
-  Don't forget change the path of deepfashion annotations and images in stript. Then place the image and generated annotation in this way:
+```
+ret = detector.run(image)
+ret:{
+			'results':{
+								1:np.array(shape=N1x6)
+								2:np.array(shape=N2x6)
+								3:np.array(shape=N3x6)
+								4:np.array(shape=N4x6)
+								5:np.array(shape=N5x6)
+								6:np.array(shape=N6x6)
+								7:np.array(shape=N7x6)
+								...
+								30:np.array(shape=N29x6)
+								31:np.array(shape=N31x6)
+			}
+			'tot':处理一张图全部用时，
+			'load':加载图片用时，
+			'pre':预处理图片用时，
+			'net':网络前向用时，
+			'merge':多个尺度下结果融合用时，
+			'image_name':测试图片名称，
+			'vis_img'：最终可视化图像numpy输出
+}
+```
 
-  ```
-  ###deepfashion2_dataset_train_img_path = /---path you choose--/train
-  ###deepfashion2_dataset_val_img_path = /---path you choose--/val
-  ###deepfashion2_dataset_anno_path = /---path you choose--/anno
-  ###Generated_deepfashion2_train_annotation = /---path you choose--/deepfashion_train.json
-  ###Generated_deepfashion2_val_annotation = /---path you choose--/deepfashion_val.json
-  ###CenterNet_path = /---path you choose--/centernet
-  
-  cd $CenterNet_path
-  cd data
-  mkdir deepfashion2
-  cd deepfashion2
-  ln -s $deepfashion2_dataset_img_path ./
-  ln -s $deepfashion2_dataset_val_img_path ./
-  mkdir annotations
-  cd annotations
-  cp $Generated_deepfashion2_train_annotation ./
-  cp $Generated_deepfashion2_val_annotation ./
-  ```
+在`ret`里面，`N1,N2,N3,N4,...,N31`分别代表第`i`个类别下车辆的数目；每辆车的共包含长度为6的信息量，含义分别为`[x1, y1, x2, y2, angle, prob]`，其中用到的是前4个表示边界框的坐标量和最后一个表示类别的置信度。
 
-  After this, your data folder just like this:
+## 4. Model Zoo
 
-  ```
-  $CenterNet_path
-  |---data
-  `---|---coco
-      |---300w
-      |---deepfashion2
-      `---|annotations
-      		`---|---deepfashion_train.json
-      		    |---deepfashion_val.json
-          |---train
-          |---val
-  ```
+在测试过程中输入的分辨率会影响检测速度，一定程度上会影响精度，因此提供了两种分辨率下训练的模型，更改测试分辨率的命令为：
 
-+ **Train model example**:
+```
+video_path = /--视频文件夹--/2020-12-08_143641_245.avi
+python src/demo.py --gpus 0\
+									 --demo $video_path \
+									 --load_model $your_model_path \
+									 --task vehicle_det \
+									 --dataset ALLVehicle \
+									 --debug 5 \
+									 --arch dla_34 \
+									 --vis_thresh 0.1 \
+									 --center_thresh 0.1 \ 
+									 --show_label \
+									 --test_scales "0.5, 0.6, 0.7, 0.8,1.0, 1.1, 1.2,1.3,1.4,1.5" \
+									 --nms \
+									 --output_video_demo $your_savepath/2020-12-08_143641_245.avi \
+									 --test_resolution "1920,1440"
+```
 
-  ```
-  python src/main.py --task cloth --dataset deepfashion2 --exp_id HG_deepfashion2 --debug 2 --load_model ''
-  ```
+#### Resdcn18（建议测试时将图片的分辨率调整为960x960）
 
-## 5. Licence
+| 模型代数 | 模型                                                         |
+| -------- | ------------------------------------------------------------ |
+| 5        | [Resdcn_18_model_5](https://drive.google.com/file/d/1mzq8GMZPhfMn3LBdP7YJeezbqE4DcClO/view?usp=sharing) |
+| 20       | [Resdcn_18_model_20](https://drive.google.com/file/d/15gzzwCwS-F1ay13wRAWgr5cz1P182BIZ/view?usp=sharing) |
+| 50       | [Resdcn_18_model_50](https://drive.google.com/file/d/1yDjNcT54nUGg-Zp20McDoRSpNJV5hyqq/view?usp=sharing) |
+| 100      | [Resdcn_18_model_100](https://drive.google.com/file/d/1N2jBS2TNdu2i6TTQ6pZqfi26-U8x1vad/view?usp=sharing) |
 
-TSAL itself is released under  MIT License (refer to the LICENSE file for details).
+#### DLA34（建议测试时将图片的分辨率调整为960x960）
 
-## 6. Acknowledgements
+| 模型代数 | 模型                                                         |
+| -------- | ------------------------------------------------------------ |
+| 2        | **[DLA34_model_2](https://drive.google.com/file/d/1GFLE86BW6hdJTVW6NZz79Gqy3g08V8TP/view?usp=sharing)** |
+| 5        | **[DLA34_model_5](https://drive.google.com/file/d/1V7wzqRlNw8iXXh3EIOVrzfsbJV5YMo2A/view?usp=sharing)** |
+| 10       | [DLA34_model_10](https://drive.google.com/file/d/1ffrgNVSy32GYLbIACcM_N0leMz912Vmy/view?usp=sharing) |
+| 20       | [DLA34_model_20](https://drive.google.com/file/d/1VTOi8onVOlvIGEejIzlas0_ukDjfw3dh/view?usp=sharing) |
+| 50       | [DLA34_model_50](https://drive.google.com/file/d/1mzq8GMZPhfMn3LBdP7YJeezbqE4DcClO/view?usp=sharing) |
 
-* CenterNet: Object as point. [CenterNet](https://github.com/xingyizhou/CenterNet) from Xingyi Zhou, Dequan Wang, Philipp Krähenbühl.
-* DCNv2: Deformable Convolutional Networks V2.[DCNv2](https://github.com/CharlesShang/DCNv2).
+#### DLA34（建议测试时将图片的分辨率调整为1920x1440）
+
+| 模型代数 | 模型                                                         |
+| -------- | ------------------------------------------------------------ |
+| 1        | [DLA34_model_1](https://drive.google.com/file/d/1hi-EKU7oCARiyCpz3V2DKC86xKW72bXB/view?usp=sharing) |
+| 5        | [DLA34_model_5](https://drive.google.com/file/d/1rcDhIS3-7DpnksSg8Kol-eXxx-_qKI1H/view?usp=sharing) |
+| 10       | [DLA34_model_10](https://drive.google.com/file/d/1HrO8kJ1Ck06bapb8PZEswXzgc35tddrJ/view?usp=sharing) |
+| 20       | **[DLA34_model_20](https://drive.google.com/file/d/1heSTVCeC8rxfJvQL2Z5a6Ec7cggB800l/view?usp=sharing)** |
+| 50       | [DLA34_model_50](https://drive.google.com/file/d/1heSTVCeC8rxfJvQL2Z5a6Ec7cggB800l/view?usp=sharing) |
+
+表格中加粗的模型是在测试视频中检出效果较好的模型。
 
