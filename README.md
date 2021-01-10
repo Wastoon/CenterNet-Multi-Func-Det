@@ -229,20 +229,20 @@ ret:{
 
 ```
 video_path = /--视频文件夹--/2020-12-08_143641_245.avi
-python src/demo.py --gpus 0\
-									 --demo $video_path \
-									 --load_model $your_model_path \
-									 --task vehicle_det \
-									 --dataset ALLVehicle \
-									 --debug 5 \
-									 --arch dla_34 \
-									 --vis_thresh 0.1 \
-									 --center_thresh 0.1 \ 
-									 --show_label \
-									 --test_scales "0.5, 0.6, 0.7, 0.8,1.0, 1.1, 1.2,1.3,1.4,1.5" \
-									 --nms \
-									 --output_video_demo $your_savepath/2020-12-08_143641_245.avi \
-									 --test_resolution "1920,1440"
+python src/demo.py   --gpus 0\
+                     --demo $video_path \
+                     --load_model $your_model_path \
+                     --task vehicle_det \
+                     --dataset ALLVehicle \
+                     --debug 5 \
+                     --arch dla_34 \
+                     --vis_thresh 0.1 \
+                     --center_thresh 0.1 \
+                     --show_label \
+                     --test_scales "0.5, 0.6, 0.7, 0.8,1.0, 1.1, 1.2,1.3,1.4,1.5" \
+                     --nms \
+                     --output_video_demo $your_savepath/2020-12-08_143641_245.avi \
+                     --test_resolution "1920,1440"
 ```
 
 #### Resdcn18（建议测试时将图片的分辨率调整为960x960）
