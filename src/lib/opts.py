@@ -251,7 +251,7 @@ class opts(object):
                              help='use ground truth depth.')
 
     ## vehicle det
-    self.parser.add_argument('--ang_weight', type=float, default=0.1,
+    self.parser.add_argument('--ang_weight', type=float, default=0.00000001,
                              help='loss weight for boxes angle.')
     self.parser.add_argument('--use_contour_fourier', type=bool, default=False, help='whether or not use fourier_contour')
     self.parser.add_argument('--fourier_contour_weight', type=float, default=0.1, help='loss weight for fourier contour')
@@ -264,6 +264,8 @@ class opts(object):
     self.parser.add_argument('--output_video_demo', type=str, default=None,
                              help='save or not video demo output')
 
+    self.parser.add_argument('--test_resolution', type=str, default=None,
+                             help='save or not video demo output')
 
 
   def parse(self, args=''):
@@ -481,7 +483,7 @@ class opts(object):
                          [19, 24], [20, 23], [21, 22], [39, 42], [38, 43], [37, 44], [36, 45], [41, 46], [40, 47],
                          [31, 35], [32, 34], [48, 54], [49, 53], [50, 52], [59, 55], [58, 56], [60, 64], [61, 63],
                          [67, 65]]},
-        'vehicle_det': {'default_resolution': [960,960], 'num_classes': 31,
+        'vehicle_det': {'default_resolution': [1920,1440], 'num_classes': 31,
                 'mean': [0.5194416012442385, 0.5378052387430711, 0.533462090585746],
                 'std': [0.3001546018824507, 0.28620901391179554, 0.3014112676161966],
                 'dataset': 'ALLVehicle'},
@@ -496,6 +498,7 @@ class opts(object):
           self.__setattr__(k, v)
     opt = self.parse()
     dataset = Struct(default_dataset_info[opt.task])
+    dataset.default_resolution =  [int(i) for i in opt.test_resolution.split(',')]
     opt.dataset = dataset.dataset
     opt = self.update_dataset_info_and_set_heads(opt, dataset)
     return opt

@@ -19,8 +19,47 @@ from models.utils import flip_tensor
 from utils.image import get_affine_transform
 from utils.post_process import vehicledet_post_process
 from utils.debugger import Debugger
+from utils.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian
 
 from .base_detector import BaseDetector
+import math
+
+def redraw_hm(results, image, opt):
+    """
+    results: a dict, key is category, value is info of objs, shape like numx6
+    """
+    draw_gaussian = draw_msra_gaussian if opt.mse_loss else \
+        draw_umich_gaussian
+    image_h, image_w = image.shape[0], image.shape[1]
+    hm = np.zeros((opt.num_classes, image_h, image_w), dtype=np.float32)
+
+    for cat in results.keys():
+        if results[cat].shape[0] == 0:
+            continue
+        for k in range(results[cat].shape[0]):
+            det_info = results[cat][k]
+            bbox = det_info[:4]
+            h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]
+            if h > 0 and w > 0:
+                radius = gaussian_radius((math.ceil(h), math.ceil(w)))
+                radius = max(0, int(radius))
+                radius = 6 if opt.mse_loss else radius
+                ct = np.array(
+                    [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
+                ct_int = ct.astype(np.int32)
+                draw_gaussian(hm[cat], ct_int, radius)
+    return hm
+
+def merge_hm_with_image(hm, image, debugger):
+    """
+    hm: num_cat x h x w
+    """
+    vis_hm = debugger.gen_colormap(hm, output_res=(image.shape[1], image.shape[0]))
+    # print(img.shape, pred.shape)
+    debugger.add_blend_img(image, vis_hm, 'hm')
+    return debugger
+
+
 
 
 class VehicledetDetector(BaseDetector):
@@ -86,6 +125,7 @@ class VehicledetDetector(BaseDetector):
             img = ((img * self.std + self.mean) * 255).astype(np.uint8)
             self.vis_hm = debugger.gen_colormap(output['hm'][i].detach().cpu().numpy())
             #print(img.shape, pred.shape)
+
             debugger.add_blend_img(img, self.vis_hm, 'pred_hm_{:.1f}'.format(scale))
             debugger.add_img(img, img_id='out_pred_{:.1f}'.format(scale))
             debugger.add_img(img, img_id='angled_pred_out')
@@ -113,12 +153,13 @@ class VehicledetDetector(BaseDetector):
         # debugger.save_all_imgs(path, prefix)
 
     def results_for_video(self, debugger, image, results):
+        #vis_img = debugger.show_onekind_imgs(img_id='hm', pause=False)
         debugger.add_img(image, img_id='ctdet')
         for j in range(1, self.num_classes + 1):
             for bbox in results[j]:
                 if bbox[5] > self.opt.vis_thresh:
                     debugger.add_coco_bbox(bbox[:4], j - 1, bbox[5], img_id='ctdet', show_txt=self.opt.show_label)
-        #debugger.add_blend_img(image, self.vis_hm, 'ctdet')
+
         vis_img = debugger.show_onekind_imgs(img_id='ctdet', pause=False)
         return vis_img
 
@@ -192,7 +233,7 @@ class VehicledetDetector(BaseDetector):
             decode_time = time.time()
             dec_time += decode_time - forward_time
 
-            if self.opt.debug >= 2 and self.opt.debug <= 5:
+            if self.opt.debug >= 2 and self.opt.debug <= 4:
                 self.debug(debugger, images, dets, output, scale)
 
             dets = self.post_process(dets, meta, scale)
@@ -209,13 +250,20 @@ class VehicledetDetector(BaseDetector):
         merge_time += end_time - post_process_time
         tot_time += end_time - start_time
 
-        if self.opt.debug >= 1 and self.opt.debug <= 5:
-            if image_name is not None:
-                self.show_results(debugger, image, results)
+
+        if self.opt.debug >= 1 and self.opt.debug <= 4:
+            #if image_name is not None:
+            self.show_results(debugger, image, results)
                 # self.save_results_only(debugger, image, results, image_name)
                 # self.save_person_only(debugger, image, results, image_name)
 
+        #import pdb
+        #pdb.set_trace()
+
         if self.opt.debug == 5:
+            #hm = redraw_hm(results, image, self.opt)
+            #debugger = merge_hm_with_image(hm, image, debugger)
+            #debugger.show_onekind_imgs(img_id='hm', pause=False)
             vis_img = self.results_for_video(debugger, image, results)
         if self.opt.debug == 0:
             if image_name is not None:

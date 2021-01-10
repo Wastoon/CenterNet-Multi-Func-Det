@@ -88,9 +88,10 @@ class VehicleDetDataset(data.Dataset):
 
         rot = 0
         flipped = False
+        scale_choose = [i for i in np.arange(0.1,1.3,0.1)] + [i for i in np.arange(1.0,1.3,0.02)]
         if self.split == 'train':
             if not self.opt.not_rand_crop:
-                s = s * np.random.choice(np.arange(0.1, 1.2, 0.1))
+                s = s * np.random.choice(np.array(scale_choose))
                 w_border = self._get_border(128, img.shape[1])
                 h_border = self._get_border(128, img.shape[0])
                 c[0] = np.random.randint(low=w_border, high=img.shape[1] - w_border)

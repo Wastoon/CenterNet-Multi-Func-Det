@@ -36,7 +36,7 @@ def main(opt):
   print('Creating model...')
   model = create_model(opt.arch, opt.heads, opt.head_conv)
   optimizer = torch.optim.Adam(model.parameters(), opt.lr)
-  optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=0.9)
+  #optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=0.9)
   start_epoch = 0
   if opt.load_model != '':
     model, optimizer, start_epoch = load_model(

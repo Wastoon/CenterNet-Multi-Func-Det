@@ -12,7 +12,7 @@ import torch.utils.data as data
 
 class ALLVehicle(data.Dataset):
   num_classes = 31
-  default_resolution = [960, 960]
+  default_resolution = [1920, 1440]
   #mean = np.array([0.40789654, 0.44719302, 0.47026115],
   #                 dtype=np.float32).reshape(1, 1, 3)
   #std  = np.array([0.28863828, 0.27408164, 0.27809835],
